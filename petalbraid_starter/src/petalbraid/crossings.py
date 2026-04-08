@@ -43,6 +43,27 @@ def crossing_order_key(a: StemPair, b: StemPair) -> tuple[int, int, int, int]:
 
 
 def enumerate_side_crossings(pairs: tuple[StemPair, ...], side: Side) -> list[CrossingRecord]:
+    """
+    Enumerate all crossings between stem pairs on a given side.
+
+    Parameters
+    ----------
+    pairs : tuple[StemPair, ...]
+        A tuple of stem pairs to check for crossings.
+    side : Side
+        The side (LEFT or RIGHT) these pairs belong to.
+
+    Returns
+    -------
+    list[CrossingRecord]
+        A sorted list of crossing records for all pairs that interleave,
+        ordered by their crossing order key.
+
+    Notes
+    -----
+    Only pairs with interleaving intervals are included as crossings.
+    Singleton pairs are automatically excluded by the interleaving check.
+    """
     out: list[CrossingRecord] = []
     for i in range(len(pairs)):
         for j in range(i + 1, len(pairs)):
