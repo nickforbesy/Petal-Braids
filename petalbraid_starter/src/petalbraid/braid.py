@@ -5,6 +5,17 @@ from typing import Iterable
 
 
 def _validate_generator(gen: int, num_strands: int) -> None:
+    """Validate that a generator is valid for the given braid group.
+    
+    Args:
+        gen: The generator value. Positive integers represent sigma_i,
+             negative integers represent sigma_i^{-1}.
+        num_strands: The number of strands in the braid group B_n.
+    
+    Raises:
+        ValueError: If gen is 0, or if the absolute value of gen is not
+                   in the valid range [1, num_strands - 1].
+    """
     if gen == 0:
         raise ValueError("Generator 0 is invalid. Use +/-i for sigma_i^{+/-1}.")
     idx = abs(gen)
