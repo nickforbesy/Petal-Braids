@@ -11,16 +11,11 @@ from .stem import build_standard_stem
 
 @dataclass(frozen=True)
 class PetalToBraidConvention:
-    """Configuration for your eventual petal -> braid algorithm.
-
-    The scaffold is intentionally explicit about these choices because they
-    affect the braid word you get from a petal permutation.
-    """
-
     input_base: int = 0
     canonicalize_rotation: bool = False
     target_num_strands: int | None = None
     placeholder_positive: bool = True
+    placeholder_strategy: str = "wave"  # "wave" or "increasing"
 
 
 @dataclass(frozen=True)
@@ -47,17 +42,58 @@ def _coerce_permutation(
     return perm
 
 
+def _default_num_strands(perm: PetalPermutation) -> int:
+    return max(1, (len(perm) - 1) // 2)
+
+
+def _wave_indices(num_crossings: int, num_strands: int) -> tuple[int, ...]:
+    """Return indices like 1,2,...,m,m-1,...,1,2,... with m=num_strands-1."""
+    max_gen = num_strands - 1
+    if max_gen <= 0 or num_crossings <= 0:
+        return ()
+
+    if max_gen == 1:
+        return (1,) * num_crossings
+
+    one_period = tuple(range(1, max_gen + 1)) + tuple(range(max_gen - 1, 0, -1))
+    out: list[int] = []
+    while len(out) < num_crossings:
+        out.extend(one_period)
+    return tuple(out[:num_crossings])
+
+
+def _increasing_indices(num_crossings: int, num_strands: int) -> tuple[int, ...]:
+    """Return indices cycling upward: 1,2,...,m,1,2,..."""
+    max_gen = num_strands - 1
+    if max_gen <= 0 or num_crossings <= 0:
+        return ()
+
+    return tuple(((k % max_gen) + 1) for k in range(num_crossings))
+
+
+def _placeholder_generators(
+    *,
+    num_crossings: int,
+    num_strands: int,
+    positive: bool,
+    strategy: str,
+) -> tuple[int, ...]:
+    if strategy == "wave":
+        base = _wave_indices(num_crossings, num_strands)
+    elif strategy == "increasing":
+        base = _increasing_indices(num_crossings, num_strands)
+    else:
+        raise ValueError(f"Unknown placeholder strategy: {strategy!r}")
+
+    sign = 1 if positive else -1
+    return tuple(sign * g for g in base)
+
+
 def petal_to_crossings(
     data: PetalPermutation | Iterable[int] | str,
     *,
     convention: PetalToBraidConvention | None = None,
 ) -> list[CrossingRecord]:
-    """Convert a petal permutation into a crossing list via a stem intermediate.
-
-    This is a solid first milestone because it gives you a deterministic,
-    inspectable combinatorial object before you commit to a braid convention.
-    """
-
     conv = convention or PetalToBraidConvention()
     perm = _coerce_permutation(data, convention=conv)
     stem = build_standard_stem(perm)
@@ -69,25 +105,21 @@ def petal_to_unreduced_braid(
     *,
     convention: PetalToBraidConvention | None = None,
 ) -> ConversionResult:
-    """Starter placeholder from petal permutation to braid word.
-
-    The current generator assignment is intentionally simple and deterministic:
-    the k-th crossing becomes sigma_k (or sigma_k^-1 if you flip the placeholder
-    sign). This is *not* the final knot-theoretic map. It is here so the
-    package is runnable while we develop the real generator/sign assignment.
-    """
-
     conv = convention or PetalToBraidConvention()
     perm = _coerce_permutation(data, convention=conv)
     crossings = tuple(petal_to_crossings(perm, convention=conv))
 
     if conv.target_num_strands is None:
-        num_strands = max(2, len(crossings) + 1)
+        num_strands = _default_num_strands(perm)
     else:
         num_strands = conv.target_num_strands
 
-    sign = 1 if conv.placeholder_positive else -1
-    generators = tuple(sign * max(1, idx) for idx, _ in enumerate(crossings, start=1))
+    generators = _placeholder_generators(
+        num_crossings=len(crossings),
+        num_strands=num_strands,
+        positive=conv.placeholder_positive,
+        strategy=conv.placeholder_strategy,
+    )
     braid = BraidWord(num_strands=num_strands, generators=generators)
 
     return ConversionResult(permutation=perm, crossings=crossings, braid=braid)
