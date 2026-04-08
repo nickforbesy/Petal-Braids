@@ -43,7 +43,7 @@ def _coerce_permutation(
 
 
 def _default_num_strands(perm: PetalPermutation) -> int:
-    return max(1, (len(perm) - 1) // 2)
+    return max(1, perm.n)
 
 
 def _wave_indices(num_crossings: int, num_strands: int) -> tuple[int, ...]:
@@ -52,10 +52,7 @@ def _wave_indices(num_crossings: int, num_strands: int) -> tuple[int, ...]:
     if max_gen <= 0 or num_crossings <= 0:
         return ()
 
-    if max_gen == 1:
-        return (1,) * num_crossings
-
-    one_period = tuple(range(1, max_gen + 1)) + tuple(range(max_gen - 1, 0, -1))
+    one_period = tuple(range(1, max_gen + 1)) + (tuple(range(max_gen - 1, 0, -1)) if max_gen > 2 else ())
     out: list[int] = []
     while len(out) < num_crossings:
         out.extend(one_period)

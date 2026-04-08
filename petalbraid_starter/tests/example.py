@@ -5,7 +5,7 @@ from petalbraid.braid import BraidWord
 def run_example():
     # 1) Pick a petal permutation in 1-based indexing
     #    For 2n+1=7, permute {1..7} in petal-knot form
-    raw_perm = (1, 4,7, 3,6,2,5)
+    raw_perm = (1, 4,7, 3,6,2,5, 8, 9)
 
     # 2) Build validated object
     petal_perm = PetalPermutation.from_iterable(raw_perm, base=1)
