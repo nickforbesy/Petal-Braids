@@ -112,4 +112,33 @@ class BraidWord:
         return f"B_{self.num_strands}: " + " ".join(parts)
 
     def __str__(self) -> str:
-        return self.canonical_string()
+        if not self.generators:
+            return "1"
+
+        parts: list[str] = []
+        gens = self.generators
+        i = 0
+
+        while i < len(gens):
+            g = gens[i]
+            count = 1
+            i += 1
+
+        while i < len(gens) and gens[i] == g:
+            count += 1
+            i += 1
+
+        idx = abs(g)
+
+        if g > 0:
+            if count == 1:
+                parts.append(f"sigma_{idx}")
+            else:
+                parts.append(f"sigma_{idx}^{count}")
+        else:
+            if count == 1:
+                parts.append(f"sigma_{idx}^-1")
+            else:
+                parts.append(f"(sigma_{idx}^-1)^{count}")
+
+        return " ".join(parts)

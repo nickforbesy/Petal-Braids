@@ -47,12 +47,14 @@ def _default_num_strands(perm: PetalPermutation) -> int:
 
 
 def _wave_indices(num_crossings: int, num_strands: int) -> tuple[int, ...]:
-    """Return indices like 1,2,...,m,m-1,...,1,2,... with m=num_strands-1."""
+    """Return indices like odd numbers then even numbers: (1,3,5,...)(2,4,6,...)."""
     max_gen = num_strands - 1
     if max_gen <= 0 or num_crossings <= 0:
         return ()
 
-    one_period = tuple(range(1, max_gen + 1)) + (tuple(range(max_gen - 1, 0, -1)) if max_gen > 2 else ())
+    odds = tuple(range(1, max_gen + 1, 2))
+    evens = tuple(range(2, max_gen + 1, 2))
+    one_period = odds + evens
     out: list[int] = []
     while len(out) < num_crossings:
         out.extend(one_period)
